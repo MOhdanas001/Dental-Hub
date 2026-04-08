@@ -152,6 +152,8 @@
                             <th>Products</th>
                             <th>Price</th>
                             <th>Quantity</th>
+                            <th>SGST</th>
+                            <th>CGST</th>
                             <th>Total</th>
                            
                         </tr>
@@ -168,7 +170,12 @@
                                     
                                 </div>
                             </td>
-                            <td class="align-middle">₹<%=item.product.price*item.quantity%> <del>₹<%=item.product.originalprice*item.quantity%></td>
+
+                            <td class="align-middle">%<%=item.product.SGST%> </td>
+                            <td class="align-middle">%<%=item.product.CGST%> </td>
+                           
+
+                            <td class="align-middle">₹<%=item.product.price*item.quantity+(item.product.price*item.quantity*(item.product.SGST+item.product.SGST)/100)%> <del>₹<%=item.product.originalprice*item.quantity+(item.product.originalprice*item.quantity*(item.product.SGST+item.product.SGST)/100)%></td>
                                </tr>
                         <%})%>
                     </tbody>
@@ -190,6 +197,7 @@
                             <h6>Subtotal</h6>
                             <h6>₹<%=total%> </h6>
                         </div>
+                       
                         <div class="d-flex justify-content-between">
                             <h6 class="font-weight-medium">Shipping</h6>
                             <h6 class="font-weight-medium"><%=deliveryFee%></h6>

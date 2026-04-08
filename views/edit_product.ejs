@@ -122,6 +122,24 @@
                     <%=products.information%>
                 </textarea>
               </div>
+
+              <div class="form-group">
+                <label>HSN No</label>
+                <input type="text" value="<%=products.hsnNo?products.hsnNo:''%>" name="hsnNo" class="form-control">
+              </div>
+    
+              <div class="form-group">
+                <label>SGST</label>
+                <input type="number" value="<%=products.SGST?products.SGST:''%>" name="sgst" class="form-control" required>
+              </div>
+    
+              <div class="form-group">
+                <label>CGST</label>
+                <input type="number" value="<%=products.CGST?products.CGST:''%>" name="cgst" class="form-control" required>
+              </div>
+    
+    
+    
               <div class="form-group">
                 <label>Upload Image</label>
                 <input type="file" name="img"  class="form-control-file">

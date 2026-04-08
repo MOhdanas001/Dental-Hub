@@ -490,8 +490,8 @@ app.get("/placeorder", async (req, res) => {
             ? item.product 
             : await product.findById(item.product);
 
-        total += productt.price * item.quantity;
-        org+=productt.originalprice * item.quantity;
+        total += productt.price * item.quantity+(productt.price * item.quantity*(productt.SGST+productt.CGST)/100);
+        org+=productt.originalprice * item.quantity+(productt.originalprice * item.quantity*(productt.SGST+productt.CGST)/100);
     }
     }
     let deliveryFee = 0;
@@ -588,7 +588,7 @@ app.get("/orderconfirm", async (req, res) => {
       return res.redirect('/cart');
     }
     for(let item of cart.items){
-      total += item.product.price * item.quantity;
+      total += item.product.price * item.quantity+(item.product.price * item.quantity*(item.product.SGST+item.product.CGST)/100);;
     }
    
     if (!address.city || address.city.toLowerCase().trim() !== "rohtak") {
@@ -710,12 +710,14 @@ app.get("/myorders", async (req, res) => {
 
 const formattedOrders = orders.map(order => {
   let total = 0;
-
+  let final=0;
+  final=final+order.total;
   const items = order.items.map(i => {
     if (i.product) {
       // Product still exists
-      const subtotal = i.product.price * i.quantity;
+      const subtotal = i.product.price * i.quantity+(i.product.price * i.quantity*(i.product.SGST+i.product.CGST)/100);
       total += subtotal;
+      
       return {
         productName: i.product.productName,
         price: i.product.price,
@@ -740,13 +742,15 @@ const formattedOrders = orders.map(order => {
     status: order.status,
     createdAt: order.createdAt,
     items,
-    total
+    total,
+    final
   };
 });
 
     res.render("myorder", {
       orders: formattedOrders,
-      currentUser: req.user
+      currentUser: req.user,
+      
     });
 
   } catch (err) {
@@ -807,10 +811,28 @@ app.get("/admin/add-product", (req, res) => {
   res.render("add_product");
 });
 
+app.get("/updateproducts",async(req,res)=>{
+
+
+      await product.updateMany(
+        {
+          SGST:{$exists:false}
+        },
+        {
+          $set:{
+            SGST:2.5,
+            CGST:2.5,
+            hsnNo:"123",
+          },
+        }
+      )
+      console.log("Product updated");
+})
+
 app.post("/admin/add-product", upload.single("img"), async (req, res) => {
   try {
    
-    const { productName,originalprice, price, totalStock, shortDescription, longDescription, category, top,information } = req.body;
+    const { productName,originalprice, price, totalStock, shortDescription, longDescription, category, top,information,hsnNo,sgst,cgst } = req.body;
 
     
    
@@ -824,6 +846,9 @@ app.post("/admin/add-product", upload.single("img"), async (req, res) => {
       category,
       isTopSeller:top==="yes"?true:false,
       information,
+      hsnNo,
+      SGST:sgst,
+      CGST:cgst,
       img: req.file ? req.file.path : "https://via.placeholder.com/150"
     });
 
@@ -933,7 +958,7 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
     // Compute totals
     let productTotal = 0;
     order.items.forEach(item => {
-      if (item.product && item.product.price) productTotal += item.product.price * item.quantity;
+      if (item.product && item.product.price) productTotal += item.product.price * item.quantity+(item.product.price * item.quantity*(item.product.SGST+item.product.CGST)/100);
     });
     const deliveryFee = (order.total || 0) - productTotal;
 
@@ -1051,13 +1076,16 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
     doc.moveDown(0.3);
 
     const tableTop = doc.y;
-    const marginLeft = 50;
-    const tableWidth = 500;
+    const marginLeft = 35;
+    const tableWidth = 530;
     const colSr = 50;
-    const colProduct = 90;
-    const colQty = 340;
-    const colPrice = 390;
-    const colSubtotal = 470;
+    const colProduct = 70;
+    const hsnNo=295
+    const colQty = 337;
+    const colPrice = 370;
+    const colSGST=420;
+    const colCGST=470;
+    const colSubtotal = 510;
     const rowHeight = 20;
 
     // DRAW HEADER ROW
@@ -1067,9 +1095,13 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
     doc.fillColor("#000000");
     doc.text("Sr", marginLeft + 5, tableTop + 5, { width: colProduct - colSr - 5 });
     doc.text("Product", colProduct, tableTop + 5);
+    doc.text("Hsn", hsnNo, tableTop + 5);
+    
     doc.text("Qty", colQty, tableTop + 5);
-    doc.text(`Price (${rupee})`, colPrice, tableTop + 5);
-    doc.text(`Subtotal (${rupee})`, colSubtotal, tableTop + 5);
+    doc.text(`Price`, colPrice, tableTop + 5);
+    doc.text(`SGST`, colSGST, tableTop + 5);
+    doc.text(`CGST`, colCGST, tableTop + 5);
+    doc.text(`Total`, colSubtotal, tableTop + 5);
 
     // rows
     let y = tableTop + rowHeight;
@@ -1088,7 +1120,10 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
       const productName = item.product ? item.product.productName : "Product Deleted";
       const qty = item.quantity || 0;
       const price = item.product ? item.product.price : 0;
-      const subtotal = price * qty;
+      const subtotal = price * qty+(price * qty*(item.product.SGST+item.product.CGST)/100);
+      const sgst=item.product.SGST;
+      const cgst=item.product.CGST;
+      const hsn=item.product.hsnNo;
 
       // Draw row border
       doc.rect(marginLeft, y, tableWidth, rowHeight).stroke();
@@ -1097,8 +1132,12 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
       const prodColWidth = colQty - colProduct - 5;
       doc.text(String(i + 1), marginLeft + 5, y + 5);
       doc.text(productName, colProduct, y + 5, { width: prodColWidth });
+      doc.text(hsn, hsnNo, y + 5);
+
       doc.text(String(qty), colQty, y + 5);
       doc.text(`${rupee}${price}`, colPrice, y + 5);
+      doc.text(`${sgst}%`, colSGST, y + 5);
+      doc.text(`${cgst}%`, colCGST, y + 5);
       doc.text(`${rupee}${subtotal}`, colSubtotal, y + 5);
 
       y += rowHeight;
@@ -1142,7 +1181,7 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
 app.post("/admin/products/edit/:id",upload.single("img"), async (req, res) => {
   try {
     if (!req.user || req.user.role!=="admin") return res.redirect("/login");
-    const { productName,originalprice, price, totalStock, shortDescription, longDescription, category, top, information } = req.body;
+    const { productName,originalprice, price, totalStock, shortDescription, longDescription, category, top, information,hsnNo,sgst,cgst } = req.body;
 
     let updateData = {
       productName,
@@ -1154,6 +1193,9 @@ app.post("/admin/products/edit/:id",upload.single("img"), async (req, res) => {
       category,
       isTopSeller:top==="yes"?true:false,
       information,
+      hsnNo,
+      SGST:sgst,
+      CGST:cgst
     };
 
 

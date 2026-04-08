@@ -48,7 +48,24 @@ const productSchema = new mongoose.Schema({
   information: {
     type: String,
    
+  },
+  hsnNo: {
+    type: String,
+    required: true,
+    
+  },
+
+  SGST:{
+    type:Number,
+   required:true 
+  },
+
+  CGST:{
+    type:Number,
+    required:true
   }
+
+
 }, { timestamps: true });
 
 const Product = mongoose.model("Product", productSchema);

@@ -137,6 +137,8 @@
                         <th>Product</th>
                         <th>Price</th>
                         <th>Qty</th>
+                        <th>SGST</th>
+                        <th>CGST</th>
                         <th>Subtotal</th>
                        
                       </tr>
@@ -171,10 +173,11 @@
                           </td>
                     
                           <td><%= item.quantity %></td>
-                    
+                          <td>%<%=item.product.SGST%> </td>
+                          <td>%<%=item.product.CGST%> </td>
                           <td>
                             <% if (item.product) { %>
-                              ₹<%= item.quantity * item.product.price %>
+                              ₹<%= item.quantity * item.product.price +(item.product.price*item.quantity*(item.product.SGST+item.product.SGST)/100)%>
                             <% } else { %>
                               N/A
                             <% } %>
