@@ -1,147 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="utf-8">
-    <title>Dental Hub - Single spot for all your dental and stationary products</title>
-  
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="Free HTML Templates" name="keywords">
-    <meta content="Free HTML Templates" name="description">
-
-    <!-- Favicon -->
-    <link href="img/favicon.ico" rel="icon">
-
-    <!-- Google Web Fonts -->
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">  
-
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
-
-    <!-- Libraries Stylesheet -->
-    <link href="lib/animate/animate.min.css" rel="stylesheet">
-    <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
-
-    <!-- Customized Bootstrap Stylesheet -->
-    <link href="css/style.css" rel="stylesheet">
-</head>
+<%- include('partials/head', { title: 'Place Order - Dental Hub' }) %>
 
 <body>
-    <!-- Topbar Start -->
-    <div class="container-fluid">
-        <div class="row bg-secondary py-1 px-xl-5">
-          
-            <div class="col-lg-6 text-center text-lg-right">
-               
-                <div class="d-inline-flex align-items-center d-block d-lg-none">
-                   
-                    <a href="/cart" class="btn px-0 ml-2">
-                        <i class="fas fa-shopping-cart text-dark"><span style="margin-left: 3px;">Cart</span></i>
-                        </a>
+    <%- include('partials/navbar') %>
 
-                        <div class="ml-3 mt-1 mb-1 text-left">
-                            <form action="/search" method="post">
-                                <div class="input-group">
-                                    <input type="text" name="searchTerm"  class="searchBox form-control" placeholder="Search for products">
-                                    <div class="input-group-append">
-                                        <Button style="border: none; background: none;" type="submit"> 
-                                            <span class="input-group-text bg-transparent text-primary">
-                                            <i class="fa fa-search"></i>
-                                        </span>
-                                    </Button>
-                                    </div>
-                                </div>
-                            </form>
-                            <ul  class="suggestions list-group position-absolute w-100" style="z-index: 1000;"></ul>
-            
-                        </div>
-                </div>
-            </div>
-        </div>
-        <div class="row align-items-center bg-light py-3 px-xl-5 d-none d-lg-flex">
-            <div class="col-lg-4">
-                <a href="/" class="text-decoration-none">
-                    <img  src="/img/logodental.png" height="60px" width="100px" alt="">
-                    <!-- <span class="h1 text-uppercase text-primary bg-dark px-2">Dental</span>
-                    <span class="h1 text-uppercase text-dark bg-primary px-2 ml-n1">Hub</span> -->
-                </a>
-            </div>
-         
- <div class="col-lg-4 col-6 text-left">
-    <form action="/search" method="post">
-        <div class="input-group">
-            <input type="text" name="searchTerm"  class="searchBox form-control" placeholder="Search for products">
-            <div class="input-group-append">
-                <Button style="border: none; background: none;" type="submit"> 
-                    <span class="input-group-text bg-transparent text-primary">
-                    <i class="fa fa-search"></i>
-                </span>
-            </Button>
-            </div>
-        </div>
-    </form>
-    <ul  class="suggestions list-group position-absolute w-100" style="z-index: 1000;"></ul>
-
-</div>
-
-
-            <div class="col-lg-4 col-6 text-right">
-                <p class="m-0">Customer Service</p>
-                <h5 class="m-0">+91 9616585990</h5>
-            </div>
-        </div>
-    </div>
-    <!-- Topbar End -->
-
-
-    <!-- Navbar Start -->
-    <div class="container-fluid bg-dark mb-30">
-        <div class="row px-xl-5">
-          
-            <div class="col-lg-9">
-                <nav class="navbar navbar-expand-lg bg-dark navbar-dark py-3 py-lg-0 px-0">
-                    <a href="/" class="text-decoration-none d-block d-lg-none">
-                        <img style="filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(33deg) brightness(114%) contrast(101%);" src="/img/logodental.png" height="60px" width="100px" alt="">
-                        <!-- <span class="h1 text-uppercase text-primary bg-dark px-2">Dental</span>
-                        <span class="h1 text-uppercase text-dark bg-primary px-2 ml-n1">Hub</span> -->
-                    </a>
-                    <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
-                        <div class="navbar-nav mr-auto py-0">
-                            <a href="/" class="nav-item nav-link ">Home</a>
-                           
-                            <a href="#footer" class="nav-item nav-link">Contact</a>
-                            <%if(currentUser!==""){%>
-                            <a href="/myorders" class="nav-item nav-link">My Orders</a>
-                            <a href="/logout" class="nav-item nav-link">Logout</a>
-                            <%} else {%>
-                            <a href="/login" class="nav-item nav-link">Login</a>
-                            <a href="/signup" class="nav-item nav-link">Sign Up</a>
-                            <% }%>
-                        </div>
-                        <div class="navbar-nav ml-auto py-0 d-none d-lg-block">
-                            
-                            <a href="/cart" class="btn px-0 ml-3">
-                                <i class="fas fa-shopping-cart text-primary"><span style="margin-left: 3px;">Cart</span></i>
-                                   </a>
-                        </div>
-                    </div>
-                </nav>
-            </div>
-        </div>
-    </div>
-    <!-- Navbar End -->
-
-
-    <!-- Breadcrumb Start -->
-  
-    <!-- Breadcrumb End -->
-
-
-    <!-- Cart Start -->
+    <!-- Checkout / Place Order Start -->
     <div class="container-fluid">
         <div class="row px-xl-5">
             <% if (items && items.length > 0) { %>
@@ -155,82 +20,57 @@
                             <th>SGST</th>
                             <th>CGST</th>
                             <th>Total</th>
-                           
                         </tr>
                     </thead>
                     <tbody class="align-middle">
                         <% items.forEach(item => { %>
                         <tr>
-                            <td class="align-middle"><img src="<%=item.product.img%>" alt="" style="width: 50px;"> <%=item.product.productName%></td>
-                            <td class="align-middle">₹<%=item.product.price%> <del>₹<%=item.product.originalprice%></del></td>
+                            <td class="align-middle"><img src="<%= item.product.img %>" alt="" style="width: 50px;"> <%= item.product.productName %></td>
+                            <td class="align-middle">₹<%= item.product.price %> <del>₹<%= item.product.originalprice %></del></td>
                             <td class="align-middle">
                                 <div class="input-group quantity mx-auto" style="width: 100px;">
-                                    
-                                    <input type="text" class="form-control form-control-sm bg-secondary border-0 text-center" value="<%=item.quantity%>">
-                                    
+                                    <input type="text" class="form-control form-control-sm bg-secondary border-0 text-center" value="<%= item.quantity %>">
                                 </div>
                             </td>
-
-                            <td class="align-middle">%<%=item.product.SGST%> </td>
-                            <td class="align-middle">%<%=item.product.CGST%> </td>
-                           
-
-                            <td class="align-middle">₹<%=item.product.price*item.quantity+(item.product.price*item.quantity*(item.product.SGST+item.product.SGST)/100)%> <del>₹<%=item.product.originalprice*item.quantity+(item.product.originalprice*item.quantity*(item.product.SGST+item.product.SGST)/100)%></td>
-                               </tr>
-                        <%})%>
+                            <td class="align-middle">%<%= item.product.SGST %></td>
+                            <td class="align-middle">%<%= item.product.CGST %></td>
+                            <td class="align-middle">₹<%= item.product.price * item.quantity + (item.product.price * item.quantity * (item.product.SGST + item.product.CGST) / 100) %> <del>₹<%= item.product.originalprice * item.quantity + (item.product.originalprice * item.quantity * (item.product.SGST + item.product.CGST) / 100) %></del></td>
+                        </tr>
+                        <% }) %>
                     </tbody>
                 </table>
             </div>
             <div class="col-lg-4">
-                <!-- <form class="mb-30" action="">
-                    <div class="input-group">
-                        <input type="text" class="form-control border-0 p-4" placeholder="Coupon Code">
-                        <div class="input-group-append">
-                            <button class="btn btn-primary">Apply Coupon</button>
-                        </div>
-                    </div>
-                </form> -->
                 <h5 class="section-title position-relative text-uppercase mb-3"><span class="bg-secondary pr-3">Order Summary</span></h5>
                 <div class="bg-light p-30 mb-5">
                     <div class="border-bottom pb-2">
                         <div class="d-flex justify-content-between mb-3">
                             <h6>Subtotal</h6>
-                            <h6>₹<%=total%> </h6>
+                            <h6>₹<%= total %></h6>
                         </div>
-                       
                         <div class="d-flex justify-content-between">
                             <h6 class="font-weight-medium">Shipping</h6>
-                            <h6 class="font-weight-medium"><%=deliveryFee%></h6>
+                            <h6 class="font-weight-medium">₹<%= deliveryFee %></h6>
                         </div>
                     </div>
                     <div class="pt-2">
                         <div class="d-flex justify-content-between mt-2">
                             <h5>Total</h5>
-                            <h5>₹<%=total+deliveryFee%> <del class="ml-1">₹<%=org+deliveryFee%></h5>
+                            <h5>₹<%= total + deliveryFee %> <del class="ml-1">₹<%= org + deliveryFee %></del></h5>
                         </div>
                         <div class="form-group mt-3">
                             <label for="extrainfo">Extra Info (optional)</label>
                             <textarea id="extrainfo" class="form-control" placeholder="Any special requests?"></textarea>
-                          </div>
-                    
-                          <!-- ✅ Payment Options -->
-                          <div class="form-group mt-3">
+                        </div>
+                        <div class="form-group mt-3">
                             <label><strong>Payment Method:</strong></label><br>
                             <input type="radio" name="paymethod" value="cod" checked> Cash on Delivery <br>
-                           
-                          </div>
-                          
-                       
-                            <button id="payBtn" class="btn btn-block btn-primary font-weight-bold my-3 py-3">Place Order</button>
-                     
-                      
-
-                       
+                        </div>
+                        <button id="payBtn" class="btn btn-block btn-primary font-weight-bold my-3 py-3">Place Order</button>
                     </div>
                 </div>
             </div>
             <% } else { %>
-                <!-- Empty Cart Message -->
                 <div class="col-12 text-center my-5">
                     <h3 class="text-muted">🛒 Your cart is empty</h3>
                     <a href="/" class="btn btn-primary mt-3">Go Shopping</a>
@@ -238,202 +78,64 @@
             <% } %>
         </div>
     </div>
-    <!-- Cart End -->
+    <!-- Checkout / Place Order End -->
 
+    <%- include('partials/footer') %>
 
-    <!-- Footer Start -->
-    <div id="footer" class="container-fluid bg-dark text-secondary mt-5 pt-5">
-        <div class="row px-xl-5 pt-5">
-            <div class="col-lg-4 col-md-12 mb-5 pr-3 pr-xl-5">
-                <h5 class="text-secondary text-uppercase mb-4">Get In Touch</h5>
-                <p class="mb-4">Below are the details through which you can reach out  to us</p>
-                <p class="mb-2"><i class="fa fa-map-marker-alt text-primary mr-3"></i>Haris DawaKhana, Khatripura near pani tanki, Bahraich, India</p>
-                <p class="mb-2"><i class="fa fa-envelope text-primary mr-3"></i>dentalhub7718@gmail.com</p>
-                <p class="mb-0"><i class="fa fa-phone-alt text-primary mr-3"></i>+91 9616585990</p>
-            </div>
-            <div class="col-lg-8 col-md-12">
-                <div class="row">
-                    <div class="col-md-4 mb-5">
-                        <h5 class="text-secondary text-uppercase mb-4">Quick Shop</h5>
-                        <div class="d-flex flex-column justify-content-start">
-                            <a class="text-secondary mb-2" href="/"><i class="fa fa-angle-right mr-2"></i>Home</a>
-                            <a class="text-secondary mb-2" href="/dentalproducts"><i class="fa fa-angle-right mr-2"></i>Dental Products</a>
-                            <a class="text-secondary mb-2" href="/stationaryproducts"><i class="fa fa-angle-right mr-2"></i>Stationary Products</a>
-                            <a class="text-secondary mb-2" href="/cart"><i class="fa fa-angle-right mr-2"></i>Shopping Cart</a>
-                            
-                            <a class="text-secondary" href="#"><i class="fa fa-angle-right mr-2"></i>Contact Us</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-5">
-                        <h5 class="text-secondary text-uppercase mb-4">Sold By Haris DawaKhana
-                            
-                        </h5>
-                       <p class="text-primary" style="font-size: larger;">Marketed By DentHub</p>
-                    </div>
-                    <div class="col-md-4 mb-5">
-                        <h5 class="text-secondary text-uppercase mb-4">Newsletter</h5>
-                        <p>Sign Up to get our latest news</p>
-                        <form action="">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Your Email Address">
-                                <div class="input-group-append">
-                                    <button class="btn btn-primary">Sign Up</button>
-                                </div>
-                            </div>
-                        </form>
-                        <h6 class="text-secondary text-uppercase mt-4 mb-3">Follow Us</h6>
-                        <div class="d-flex">
-                            <a class="btn btn-primary btn-square mr-2" href="#"><i class="fab fa-twitter"></i></a>
-                            <a class="btn btn-primary btn-square mr-2" href="#"><i class="fab fa-facebook-f"></i></a>
-                            <a class="btn btn-primary btn-square mr-2" href="#"><i class="fab fa-linkedin-in"></i></a>
-                            <a class="btn btn-primary btn-square" href="#"><i class="fab fa-instagram"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row border-top mx-xl-5 py-4" style="border-color: rgba(256, 256, 256, .1) !important;">
-            <div class="col-md-6 px-xl-0">
-                <p class="mb-md-0 text-center text-md-left text-secondary">
-                    &copy; <a class="text-primary" href="/">denthub.in</a>. All Rights Reserved. Designed
-                    by
-                    <a class="text-primary" href="https://htmlcodex.com">HTML Codex</a>
-                </p>
-            </div>
-           
-        </div>
-    </div>
-    <!-- Footer End -->
-
-
-    <!-- Back to Top -->
-    <a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-
     <script>
- 
-const searchBoxes = document.querySelectorAll(".searchBox");
-  const suggestionLists = document.querySelectorAll(".suggestions");
+        document.getElementById("payBtn").onclick = async function () {
+            const extraInfo = document.getElementById("extrainfo").value.trim();
+            const paymethod = document.querySelector('input[name="paymethod"]:checked').value;
 
-  searchBoxes.forEach((searchBox, index) => {
-    const suggestions = suggestionLists[index]; // match corresponding <ul>
-    let timeout = null;
-
-    searchBox.addEventListener("input", () => {
-      clearTimeout(timeout);
-
-      const query = searchBox.value.trim();
-
-      if (!query) {
-        suggestions.innerHTML = "";
-        return;
-      }
-
-      timeout = setTimeout(async () => {
-        try {
-          const response = await fetch(`/search-suggest?q=${encodeURIComponent(query)}`);
-          const data = await response.json();
-
-          // Clear old suggestions
-          suggestions.innerHTML = "";
-
-          if (data.length === 0) {
-            suggestions.innerHTML = `<li class="list-group-item">No results</li>`;
-            return;
-          }
-
-          data.forEach(product => {
-            const li = document.createElement("li");
-            li.classList.add("list-group-item", "list-group-item-action");
-            li.textContent = product.productName;
-            li.addEventListener("click", () => {
-              window.location.href = `/detail/${product._id}`;
-            });
-            suggestions.appendChild(li);
-          });
-
-        } catch (err) {
-          console.error("Suggestion fetch error:", err);
-        }
-      }, 400); // debounce
-    });
-  });
-
-  document.getElementById("payBtn").onclick = async function () {
-    const extraInfo = document.getElementById("extrainfo").value.trim();
-    const paymethod = document.querySelector('input[name="paymethod"]:checked').value;
-
-    if (paymethod === "cod") {
-      // COD flow: redirect with params
-      window.location.href = `/orderconfirm?paystatus=cod&extrainfo=${encodeURIComponent(extraInfo)}`;
-    } else {
-      // Online Payment with Razorpay
-       const amount = "<%= total + deliveryFee %>";
-      const response = await fetch("/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({  amount: amount })
-      });
-
-      const order = await response.json();
-
-      var options = {
-        "key": "<%= razorpayKeyId %>", // replace with real key
-        "amount": amount,
-        "currency": "INR",
-        "name": "Dent Hub",
-        "description": "Order Payment",
-        "order_id": order.id,
-        "handler": function (response) {
-          fetch("/verify-payment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...response,
-              extrainfo: extraInfo
-            }),
-            credentials: "include"
-          })
-          .then(res => res.json())
-          .then(data => {
-            console.log(data)
-            if (data.success) {
-              window.location.href = `/orderconfirm?paystatus=paid&extrainfo=${encodeURIComponent(extraInfo)}`;
+            if (paymethod === "cod") {
+                window.location.href = `/orderconfirm?paystatus=cod&extrainfo=${encodeURIComponent(extraInfo)}`;
             } else {
-              alert("Payment verification failed ❌");
+                const amount = "<%= total + deliveryFee %>";
+                const response = await fetch("/create-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ amount: amount })
+                });
+
+                const order = await response.json();
+
+                var options = {
+                    "key": "<%= razorpayKeyId %>",
+                    "amount": amount,
+                    "currency": "INR",
+                    "name": "Dent Hub",
+                    "description": "Order Payment",
+                    "order_id": order.id,
+                    "handler": function (response) {
+                        fetch("/verify-payment", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                ...response,
+                                extrainfo: extraInfo
+                            }),
+                            credentials: "include"
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.href = `/orderconfirm?paystatus=paid&extrainfo=${encodeURIComponent(extraInfo)}`;
+                            } else {
+                                alert("Payment verification failed ❌");
+                            }
+                        });
+                    },
+                    "prefill": {
+                        "name": "<%= typeof currentUser !== 'undefined' ? currentUser.username : '' %>",
+                        "email": "<%= typeof currentUser !== 'undefined' ? currentUser.useremail : '' %>"
+                    },
+                    "theme": { "color": "#3399cc" }
+                };
+                var rzp1 = new Razorpay(options);
+                rzp1.open();
             }
-          });
-        },
-        "prefill": {
-          "name": "<%= currentUser.username %>",
-          "email": "<%= currentUser.useremail %>"
-        },
-        "theme": { "color": "#3399cc" }
-      };
-      var rzp1 = new Razorpay(options);
-      rzp1.open();
-    }
-  }
-  
-</script>
-
-
-
-
-   
-    <!-- JavaScript Libraries -->
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
-    <script src="lib/easing/easing.min.js"></script>
-    <script src="lib/owlcarousel/owl.carousel.min.js"></script>
-
-    <!-- Contact Javascript File -->
-    <script src="mail/jqBootstrapValidation.min.js"></script>
-    <script src="mail/contact.js"></script>
-
-    <!-- Template Javascript -->
-    <script src="js/main.js"></script>
+        }
+    </script>
 </body>
-
 </html>

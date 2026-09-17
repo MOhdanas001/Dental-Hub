@@ -1,0 +1,33 @@
+<div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+    <a href="/detail/<%= product._id %>" class="text-decoration-none text-dark">
+        <div class="product-item bg-light mb-4">
+            <div class="product-img position-relative overflow-hidden">
+                <img class="img-fluid w-100" src="<%= product.img %>" alt="<%= product.productName %>">
+            </div>
+            <div class="text-center py-4">
+                <a class="h6 text-decoration-none" href="/detail/<%= product._id %>">
+                    <%= product.productName %>
+                </a>
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                    <h5>₹<%= typeof getInclusivePrice === 'function' ? getInclusivePrice(product.price, product.SGST, product.CGST) : product.price %></h5>
+                    <% if (product.originalprice && product.originalprice > product.price) { %>
+                        <h6 class="text-muted ml-2">
+                            <del>₹<%= typeof getInclusivePrice === 'function' ? getInclusivePrice(product.originalprice, product.SGST, product.CGST) : product.originalprice %></del>
+                            <span style="color: red;" class="ml-1">
+                                <%= (((product.originalprice - product.price) / product.originalprice) * 100).toFixed(2) %>%
+                                <i class="fa fa-arrow-down"></i>
+                            </span>
+                        </h6>
+                    <% } %>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                    <small class="fa fa-star text-primary mr-1"></small>
+                    <small class="fa fa-star text-primary mr-1"></small>
+                    <small class="fa fa-star text-primary mr-1"></small>
+                    <small class="fa fa-star text-primary mr-1"></small>
+                    <small class="fa fa-star text-primary mr-1"></small>
+                </div>
+            </div>
+        </div>
+    </a>
+</div>
