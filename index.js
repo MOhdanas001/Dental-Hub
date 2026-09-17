@@ -1,15 +1,15 @@
-const express=require('express');
-const app=express();
+const express = require('express');
+const app = express();
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
-const path=require('path');
-const mongoose=require('mongoose');
-const bodyparser=require('body-parser');
-const passport=require('passport');
-const LocalStrategy=require('passport-local').Strategy
-const bcrypt=require('bcryptjs');
-const session=require('express-session');
-const dotenv=require("dotenv");
+const path = require('path');
+const mongoose = require('mongoose');
+const bodyparser = require('body-parser');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy
+const bcrypt = require('bcryptjs');
+const session = require('express-session');
+const dotenv = require("dotenv");
 const notifier = require('node-notifier');
 const nodemailer = require("nodemailer");
 const cloudinary = require("cloudinary").v2;
@@ -17,95 +17,98 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
-app.set('views',path.join(__dirname,'views'));
-app.set('view engine','ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 app.use(express.static('public'));
-app.use(bodyparser.urlencoded({extended:true}));
+app.use(bodyparser.urlencoded({ extended: true }));
 app.use(express.json());
 
 
-dotenv.config({path:'./config.env'})
- const user=require('./Model/User');
- const product=require('./Model/Product');
- const Cart=require('./Model/Cart');
- const Address = require("./Model/Address");
- const Order = require("./Model/Order");
- const Otp = require("./Model/Otp");
- 
+dotenv.config();
+if (fs.existsSync('./config.env')) {
+  dotenv.config({ path: './config.env' });
+}
+const user = require('./Model/User');
+const product = require('./Model/Product');
+const Cart = require('./Model/Cart');
+const Address = require("./Model/Address");
+const Order = require("./Model/Order");
+const Otp = require("./Model/Otp");
 
-const DB=process.env.MONGO_URI
 
-mongoose.connect(DB,{
-    useNewUrlParser:true,
-   
+const DB = process.env.MONGO_URI || "mongodb://localhost:27017/denthub_db";
+
+mongoose.connect(DB, {
+  useNewUrlParser: true,
+
 });
 
-const db=mongoose.connection;
+const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {
 
-    console.log("Connected");
-   
+  console.log("Connected");
+
 });
 
 
 const razorpay = new Razorpay({
-  key_id: process.env.LIVE_KEY,
-  key_secret: process.env.LIVE_SECRET,
+  key_id: process.env.LIVE_KEY || "rzp_test_placeholder",
+  key_secret: process.env.LIVE_SECRET || "dummy_secret",
 });
-  
 
-passport.use(new LocalStrategy({usernameField:'email'},(email,password,done)=>{
-    user.findOne({email:email})
-    .then(userr=>{
-        if(!userr){
-            return done(null,false)
+
+passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, done) => {
+  user.findOne({ email: email })
+    .then(userr => {
+      if (!userr) {
+        return done(null, false)
+      }
+      bcrypt.compare(password, userr.password, (err, isMatch) => {
+        if (isMatch) {
+          return done(null, userr)
         }
-        bcrypt.compare(password,userr.password,(err,isMatch)=>{
-            if(isMatch){
-                return done(null,userr)
-            }
-            else{
-                return done(null,false)
-            }
-        })
+        else {
+          return done(null, false)
+        }
+      })
     })
-    .catch(err=>{
-        console.log(err);
+    .catch(err => {
+      console.log(err);
     })
 }))
 
 
 app.use(session({
-    secret:"Node",
-    resave:true,
-    saveUninitialized:true,
-   
+  secret: "Node",
+  resave: true,
+  saveUninitialized: true,
+
 }))
 
 
 
 
-passport.serializeUser(function(user, cb) {
-    process.nextTick(function() {
-      cb(null, { id: user.id, username: user.name ,role:user.role,useremail:user.email});
-    });
+passport.serializeUser(function (user, cb) {
+  process.nextTick(function () {
+    cb(null, { id: user.id, username: user.name, role: user.role, useremail: user.email });
   });
-  
-  passport.deserializeUser(function(user, cb) {
-    process.nextTick(function() {
-      return cb(null, user);
-    });
+});
+
+passport.deserializeUser(function (user, cb) {
+  process.nextTick(function () {
+    return cb(null, user);
   });
+});
 app.use(passport.initialize());
 app.use(passport.session());
 
 
 
 cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_KEY,
-  api_secret: process.env.CLOUD_SECRET,
+  cloud_name: process.env.CLOUD_NAME || "dummy_cloud",
+  api_key: process.env.CLOUD_KEY || "123456789012345",
+  api_secret: process.env.CLOUD_SECRET || "dummy_secret",
 });
 
 // Cloudinary storage setup
@@ -113,7 +116,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: "products", // folder name in Cloudinary
-    allowed_formats: ["jpg", "jpeg", "png","webp"],
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 });
 
@@ -121,78 +124,81 @@ const upload = multer({ storage });
 
 
 
-app.use((req,res,next)=>{
-   
-    res.locals.currentUser=req.user;
-    next();
+app.use((req, res, next) => {
+
+  res.locals.currentUser = req.user;
+  next();
 });
 
 
 
+function getInclusivePrice(price, sgst, cgst) {
+    const totalGst = sgst + cgst;
+    return Number((price + (price * totalGst / 100)).toFixed(2));
+}
+
+app.get('/', async (req, res) => {
+
+  let currentUser = req.user;
+  if (currentUser === undefined) {
+    currentUser = "";
+  }
+  if (currentUser.role === "admin") {
+    return res.redirect('/admin')
+  }
+
+  try {
+
+    const featuredProducts = await product.aggregate([
+      { $sample: { size: 12 } }
+    ]);
+
+    const topseller = await product.find({ isTopSeller: true });
 
 
-app.get('/',async(req,res)=>{
-    
-    let currentUser=req.user;
-    if(currentUser===undefined){
-    currentUser="";
-    }
-    if(currentUser.role==="admin"){
-      return res.redirect('/admin')
-    }
+    res.render("index", { Products: featuredProducts, currentUser: currentUser, top: topseller,getInclusivePrice:getInclusivePrice });
 
-    try {
-       
-        const featuredProducts = await product.aggregate([
-          { $sample: { size: 12 } }
-        ]);
-       
-        const topseller=await product.find({isTopSeller:true});
-    
-       
-        res.render("index", { Products: featuredProducts,currentUser:currentUser,top:topseller});
-       
-    
-      } catch (err) {
-        console.error("Error fetching featured products:", err);
-        res.render('index',{currentUser:currentUser});
-      }
-    
+
+  } catch (err) {
+    console.error("Error fetching featured products:", err);
+    res.render('index', { currentUser: currentUser });
+  }
+
 })
 
 
 
 
-app.get('/detail/:id',async(req,res)=>{
+app.get('/detail/:id', async (req, res) => {
 
-    let id=req.params.id;
-    let currentUser=req.user;
-    if(currentUser===undefined){
-    currentUser="";
-    }
+  let id = req.params.id;
+  let currentUser = req.user;
+  if (currentUser === undefined) {
+    currentUser = "";
+  }
 
-    try{
-        let Product= await product.findById(id);
-        res.render('detail',{Pro:Product,currentUser:currentUser})
-    }
-    catch (err) {
-        console.error("Error fetching  product detail:", err);
-        res.render('detail',{currentUser:currentUser});
-      }
+  try {
+    let Product = await product.findById(id);
+    res.render('detail', { Pro: Product, currentUser: currentUser,getInclusivePrice:getInclusivePrice })
+  }
+  catch (err) {
+    console.error("Error fetching  product detail:", err);
+    res.render('detail', { currentUser: currentUser });
+  }
 
-   
+
 })
 
 app.get("/cart", async (req, res) => {
-  let currentUser=req.user;
-  if(currentUser===undefined){
-  currentUser="";
+  let currentUser = req.user;
+  if (currentUser === undefined) {
+    currentUser = "";
   }
   try {
     console.log(req.session.cart);
     let items = [];
-    let total=0;
-    let org=0;
+    let total = 0;
+    let org = 0;
     if (req.user) {
       // ✅ Logged in → check DB cart
       let dbCart = await Cart.findOne({ userEmail: req.user.useremail });
@@ -203,12 +209,12 @@ app.get("/cart", async (req, res) => {
       }
 
       // ✅ If session cart exists, merge it into DB
-   
+
 
       // Populate products for rendering
       await dbCart.populate("items.product");
       items = dbCart.items;
-     
+
 
     } else {
       // ✅ Guest user → just use session cart
@@ -226,110 +232,110 @@ app.get("/cart", async (req, res) => {
       for (let item of items) {
         // if logged in: item.productId is populated object
         // if guest: item.productId is string → fetch product
-        let productt = item.product.productName 
-            ? item.product 
-            : await product.findById(item.product);
+        let productt = item.product.productName
+          ? item.product
+          : await product.findById(item.product);
 
-        total += productt.price * item.quantity;
-        org+=productt.originalprice  * item.quantity;
-    }
+        total += getInclusivePrice(productt.price,productt.SGST,productt.CGST) * item.quantity;
+        org += productt.originalprice * item.quantity;
+      }
     }
     // Render cart page
-   
-    res.render('cart', { items:items,currentUser:currentUser,total:total,org:org });
+
+    res.render('cart', { items: items, currentUser: currentUser, total: total, org: org,getInclusivePrice:getInclusivePrice });
 
   } catch (err) {
     console.error("Cart error:", err);
-   res.render('cart',{currentUser:currentUser,items:""})
+    res.render('cart', { currentUser: currentUser, items: "" })
   }
 });
 
-app.get('/signup',(req,res)=>{
+app.get('/signup', (req, res) => {
   if (req.user) return res.redirect("/");
-    res.render('signup')
+  res.render('signup')
 })
-app.get('/login',(req,res)=>{
+app.get('/login', (req, res) => {
   if (req.user) return res.redirect("/");
-    res.render('login')
+  res.render('login')
 })
 
-app.get('/dentalproducts',async(req,res)=>{
-    let currentUser=req.user;
-    if(currentUser===undefined){
-    currentUser="";
-    }
-    try{
-        const DentalProduct=await product.find({category:"dental"})
-        res.render('dentalproducts',{Products:DentalProduct,currentUser:currentUser})
-    }
-    catch (err) {
+app.get('/dentalproducts', async (req, res) => {
+  let currentUser = req.user;
+  if (currentUser === undefined) {
+    currentUser = "";
+  }
+  try {
+    const DentalProduct = await product.find({ category: "dental" })
+    res.render('dentalproducts', { Products: DentalProduct, currentUser: currentUser,getInclusivePrice:getInclusivePrice })
+  }
+  catch (err) {
     console.error("Error fetching dental products:", err);
-    res.render('dentalproducts',{currentUser:currentUser});
+    res.render('dentalproducts', { currentUser: currentUser });
   }
 })
-app.get('/stationaryproducts',async(req,res)=>{
-    let currentUser=req.user;
-    if(currentUser===undefined){
-    currentUser="";
-    }
-    try{
-        const stationaryProduct=await product.find({category:"stationary"})
-        res.render('stationaryproducts',{Products:stationaryProduct,currentUser:currentUser})
-    }
-    catch (err) {
+app.get('/stationaryproducts', async (req, res) => {
+  let currentUser = req.user;
+  if (currentUser === undefined) {
+    currentUser = "";
+  }
+  try {
+    const stationaryProduct = await product.find({ category: "stationary" })
+    res.render('stationaryproducts', { Products: stationaryProduct, currentUser: currentUser,getInclusivePrice:getInclusivePrice })
+  }
+  catch (err) {
     console.error("Error fetching stationary products:", err);
-    res.render('dentalproducts',{currentUser:currentUser});
+    res.render('dentalproducts', { currentUser: currentUser });
   }
 })
 
 
- app.post('/register',(req,res)=>{
-    const{name,email,password}=req.body;
-    user.findOne({email:email})
-    .then(userr=>{
-        if(userr){
-            notifier.notify({
-                title: 'Message!',
-                message: 'User Already Exist!',
-              
-                sound: true,
-                wait: true
-              })
-           
-            return res.redirect('/signup')
-        }
+app.post('/register', (req, res) => {
+  const { name, email, password } = req.body;
+  user.findOne({ email: email })
+    .then(userr => {
+      if (userr) {
+        notifier.notify({
+          title: 'Message!',
+          message: 'User Already Exist!',
 
-       
-        const newuser=new user({
-            name:name,
-            email:email,
-            password:password
-
+          sound: true,
+          wait: true
         })
-        bcrypt.genSalt(10,(err,salt)=>
-        bcrypt.hash(newuser.password,salt,(err,hash)=>{
-            if(err)
+
+        return res.redirect('/signup')
+      }
+
+
+      const newuser = new user({
+        name: name,
+        email: email,
+        password: password
+
+      })
+      bcrypt.genSalt(10, (err, salt) =>
+        bcrypt.hash(newuser.password, salt, (err, hash) => {
+          if (err)
             throw err;
-            newuser.password=hash;
-           
-        newuser.save()
-        .then(userr=>{
-            notifier.notify({
+          newuser.password = hash;
+
+          newuser.save()
+            .then(userr => {
+              notifier.notify({
                 title: 'Message!',
                 message: 'Account Created Successfully!',
-              
+
                 sound: true,
                 wait: true
               })
-           
-            res.redirect('/login')
+
+              res.redirect('/login')
+            })
+            .catch(err => {
+              console.log(err);
+            })
         })
-        .catch(err=>{
-            console.log(err);
-        })
-        })
-        
-        )
+
+      )
 
 
     })
@@ -432,11 +438,11 @@ app.get("/remove/:productId", async (req, res) => {
 
 
 app.get("/addaddress", async (req, res) => {
- 
+
   if (!req.user) return res.redirect("/login");
 
   let address = await Address.findOne({ userEmail: req.user.useremail });
-  
+
   res.render("addaddress", {
     user: req.user,
     address: address || null
@@ -448,9 +454,9 @@ app.get("/placeorder", async (req, res) => {
 
   if (!req.user) return res.redirect("/login");
 
-  let currentUser=req.user;
-  if(currentUser===undefined){
-  currentUser="";
+  let currentUser = req.user;
+  if (currentUser === undefined) {
+    currentUser = "";
   }
 
 
@@ -462,13 +468,13 @@ app.get("/placeorder", async (req, res) => {
     // if no address, redirect to add address page
     return res.redirect("/addaddress");
   }
- 
+
 
 
   try {
     let items = [];
-  let total=0;
-  let org=0;
+    let total = 0;
+    let org = 0;
     let dbCart = await Cart.findOne({ userEmail: req.user.useremail });
 
     // If DB cart doesn't exist, create it
@@ -477,7 +483,7 @@ app.get("/placeorder", async (req, res) => {
     }
 
     // ✅ If session cart exists, merge it into DB
- 
+
 
     // Populate products for rendering
     await dbCart.populate("items.product");
@@ -486,37 +492,37 @@ app.get("/placeorder", async (req, res) => {
       for (let item of items) {
         // if logged in: item.productId is populated object
         // if guest: item.productId is string → fetch product
-        let productt = item.product.productName 
-            ? item.product 
-            : await product.findById(item.product);
+        let productt = item.product.productName
+          ? item.product
+          : await product.findById(item.product);
 
-        total += productt.price * item.quantity+(productt.price * item.quantity*(productt.SGST+productt.CGST)/100);
-        org+=productt.originalprice * item.quantity+(productt.originalprice * item.quantity*(productt.SGST+productt.CGST)/100);
-    }
+        total += productt.price * item.quantity + (productt.price * item.quantity * (productt.SGST + productt.CGST) / 100);
+        org += productt.originalprice * item.quantity + (productt.originalprice * item.quantity * (productt.SGST + productt.CGST) / 100);
+      }
     }
     let deliveryFee = 0;
     if (!address.city || address.city.toLowerCase().trim() !== "rohtak") {
-      if(total<2000){
+      if (total < 2000) {
         deliveryFee = 90;
       }
-      
+
     }
-  
-  
+
+
     res.render("placeorder", {
       deliveryFee: deliveryFee,
-      items:items,currentUser:currentUser,total:total,org:org,razorpayKeyId: process.env.LIVE_KEY
+      items: items, currentUser: currentUser, total: total, org: org, razorpayKeyId: process.env.LIVE_KEY || "rzp_test_placeholder"
     });
 
   }
   catch (err) {
     console.error("Cart error:", err);
-   res.render('cart',{currentUser:currentUser,items:""})
+    res.render('cart', { currentUser: currentUser, items: "" })
   }
 
 
- 
-  
+
+
 });
 
 
@@ -543,17 +549,17 @@ app.post("/verify-payment", (req, res) => {
 
   const sign = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSign = crypto
-    .createHmac("sha256", process.env.LIVE_SECRET)
+    .createHmac("sha256", process.env.LIVE_SECRET || "dummy_secret")
     .update(sign.toString())
     .digest("hex");
 
   if (razorpay_signature === expectedSign) {
     // Payment verified
-    console.log("if "+ razorpay_signature,+" "+expectedSign);
+    console.log("if " + razorpay_signature, +" " + expectedSign);
     res.json({ success: true });
   } else {
     res.json({ success: false });
-    console.log("else "+ razorpay_signature,+" "+expectedSign);
+    console.log("else " + razorpay_signature, +" " + expectedSign);
   }
 });
 
@@ -565,19 +571,19 @@ app.get("/orderconfirm", async (req, res) => {
   console.log("===== ORDER CONFIRM ROUTE HIT =====");
   console.log("User session:", req.user);
   if (!req.user) return res.redirect("/login");
-  let currentUser=req.user;
-  if(currentUser===undefined){
-  currentUser="";
+  let currentUser = req.user;
+  if (currentUser === undefined) {
+    currentUser = "";
   }
   try {
-    let total=0;
-    
+    let total = 0;
+
     // fetch address
     console.log("payyyyyy")
     console.log(req.user.useremail)
     const address = await Address.findOne({ userEmail: req.user.useremail });
     console.log(address);
-   
+
     if (!address) return res.redirect("/addaddress");
 
     // fetch cart
@@ -587,17 +593,17 @@ app.get("/orderconfirm", async (req, res) => {
     if (!cart || cart.items.length === 0) {
       return res.redirect('/cart');
     }
-    for(let item of cart.items){
-      total += item.product.price * item.quantity+(item.product.price * item.quantity*(item.product.SGST+item.product.CGST)/100);;
+    for (let item of cart.items) {
+      total += item.product.price * item.quantity + (item.product.price * item.quantity * (item.product.SGST + item.product.CGST) / 100);;
     }
-   
+
     if (!address.city || address.city.toLowerCase().trim() !== "rohtak") {
-      if(total<2000){
-        total = total+90;
+      if (total < 2000) {
+        total = total + 90;
       }
-      
+
     }
-   
+
     // create order
     const order = new Order({
       userEmail: req.user.useremail,
@@ -610,7 +616,7 @@ app.get("/orderconfirm", async (req, res) => {
 
     });
 
-     
+
     await order.save();
 
     // empty cart after placing order
@@ -675,7 +681,7 @@ app.get("/orderconfirm", async (req, res) => {
 
 
     await order.populate("address");
-   
+
     res.render("orderconfirm", {
       orderId: order._id,
       items: order.items,
@@ -705,52 +711,52 @@ app.get("/myorders", async (req, res) => {
 
     // Fetch all orders for user
     const orders = await Order.find({ userEmail: req.user.useremail })
-  .populate("items.product") // only populate product
-  .sort({ createdAt: -1 });
+      .populate("items.product") // only populate product
+      .sort({ createdAt: -1 });
 
-const formattedOrders = orders.map(order => {
-  let total = 0;
-  let final=0;
-  final=final+order.total;
-  const items = order.items.map(i => {
-    if (i.product) {
-      // Product still exists
-      const subtotal = i.product.price * i.quantity+(i.product.price * i.quantity*(i.product.SGST+i.product.CGST)/100);
-      total += subtotal;
-      
-      return {
-        productName: i.product.productName,
-        price: i.product.price,
-        img: i.product.img,
-        quantity: i.quantity,
-        subtotal
-      };
-    } else {
-      // Product was deleted
-      return {
-        productName: "Product Deleted",
-        price: null,
-        img: null,
-        quantity: i.quantity,
-        subtotal: null
-      };
-    }
-  });
+    const formattedOrders = orders.map(order => {
+      let total = 0;
+      let final = 0;
+      final = final + order.total;
+      const items = order.items.map(i => {
+        if (i.product) {
+          // Product still exists
+          const subtotal = i.product.price * i.quantity + (i.product.price * i.quantity * (i.product.SGST + i.product.CGST) / 100);
+          total += subtotal;
 
-  return {
-    id: order._id,
-    status: order.status,
-    createdAt: order.createdAt,
-    items,
-    total,
-    final
-  };
-});
+          return {
+            productName: i.product.productName,
+            price: i.product.price,
+            img: i.product.img,
+            quantity: i.quantity,
+            subtotal
+          };
+        } else {
+          // Product was deleted
+          return {
+            productName: "Product Deleted",
+            price: null,
+            img: null,
+            quantity: i.quantity,
+            subtotal: null
+          };
+        }
+      });
+
+      return {
+        id: order._id,
+        status: order.status,
+        createdAt: order.createdAt,
+        items,
+        total,
+        final
+      };
+    });
 
     res.render("myorder", {
       orders: formattedOrders,
       currentUser: req.user,
-      
+
     });
 
   } catch (err) {
@@ -766,9 +772,9 @@ const geturl = (req) => {
 }
 
 
-app.get('/admin',async(req,res)=>{
+app.get('/admin', async (req, res) => {
   try {
-    if (!req.user || req.user.role!=="admin") return res.redirect("/login");
+    if (!req.user || req.user.role !== "admin") return res.redirect("/login");
     const { page = 1, search = "" } = req.query;
     const limit = 10; // orders per page
     const skip = (page - 1) * limit;
@@ -780,12 +786,12 @@ app.get('/admin',async(req,res)=>{
       if (mongoose.Types.ObjectId.isValid(search)) {
         query.$or.push({ _id: search });
       }
-     
+
     }
 
     const orders = await Order.find(query)
-    .populate("items.product") // get product details
-    .populate("address")    // get full address
+      .populate("items.product") // get product details
+      .populate("address")    // get full address
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -807,35 +813,35 @@ app.get('/admin',async(req,res)=>{
 });
 
 app.get("/admin/add-product", (req, res) => {
-  if (!req.user || req.user.role!=="admin") return res.redirect("/login");
+  if (!req.user || req.user.role !== "admin") return res.redirect("/login");
   res.render("add_product");
 });
 
-app.get("/updateproducts",async(req,res)=>{
+app.get("/updateproducts", async (req, res) => {
 
 
-      await product.updateMany(
-        {
-          SGST:{$exists:false}
-        },
-        {
-          $set:{
-            SGST:2.5,
-            CGST:2.5,
-            hsnNo:"123",
-          },
-        }
-      )
-      console.log("Product updated");
+  await product.updateMany(
+    {
+      SGST: { $exists: false }
+    },
+    {
+      $set: {
+        SGST: 2.5,
+        CGST: 2.5,
+        hsnNo: "123",
+      },
+    }
+  )
+  console.log("Product updated");
 })
 
 app.post("/admin/add-product", upload.single("img"), async (req, res) => {
   try {
-   
-    const { productName,originalprice, price, totalStock, shortDescription, longDescription, category, top,information,hsnNo,sgst,cgst } = req.body;
 
-    
-   
+    const { productName, originalprice, price, totalStock, shortDescription, longDescription, category, top, information, hsnNo, sgst, cgst } = req.body;
+
+
+
     const newProduct = new product({
       productName,
       originalprice,
@@ -844,11 +850,11 @@ app.post("/admin/add-product", upload.single("img"), async (req, res) => {
       shortDescription,
       longDescription,
       category,
-      isTopSeller:top==="yes"?true:false,
+      isTopSeller: top === "yes" ? true : false,
       information,
       hsnNo,
-      SGST:sgst,
-      CGST:cgst,
+      SGST: sgst,
+      CGST: cgst,
       img: req.file ? req.file.path : "https://via.placeholder.com/150"
     });
 
@@ -862,7 +868,7 @@ app.post("/admin/add-product", upload.single("img"), async (req, res) => {
 
 app.get("/admin/products", async (req, res) => {
   try {
-    if (!req.user || req.user.role!=="admin") return res.redirect("/login");
+    if (!req.user || req.user.role !== "admin") return res.redirect("/login");
     const { page = 1, search = "" } = req.query;
     const limit = 10; // orders per page
     const skip = (page - 1) * limit;
@@ -874,21 +880,23 @@ app.get("/admin/products", async (req, res) => {
       if (mongoose.Types.ObjectId.isValid(search)) {
         query.$or.push({ _id: search });
       }
-     
+
     }
 
-    
+
     const products = await product.find(query)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
     const totalpro = await product.countDocuments(query);
     const totalPages = Math.ceil(totalpro / limit);
-    res.render("admin_products", { products,
+    res.render("admin_products", {
+      products,
       currentPage: parseInt(page),
       totalPages,
-      search });
+      search
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send("Error fetching products");
@@ -920,7 +928,7 @@ app.get("/admin/products", async (req, res) => {
 // DELETE product by ID
 app.get("/admin/products/delete/:id", async (req, res) => {
   try {
-    if (!req.user || req.user.role!=="admin") return res.redirect("/login");
+    if (!req.user || req.user.role !== "admin") return res.redirect("/login");
     await product.findByIdAndDelete(req.params.id);
     res.redirect("/admin/products");
   } catch (err) {
@@ -933,7 +941,7 @@ app.get("/admin/products/delete/:id", async (req, res) => {
 
 app.get("/admin/products/edit/:id", async (req, res) => {
   try {
-    if (!req.user || req.user.role!=="admin") return res.redirect("/login");
+    if (!req.user || req.user.role !== "admin") return res.redirect("/login");
     const products = await product.findById(req.params.id).lean();
     if (!products) return res.status(404).send("Product not found");
     res.render("edit_product", { products });
@@ -958,7 +966,7 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
     // Compute totals
     let productTotal = 0;
     order.items.forEach(item => {
-      if (item.product && item.product.price) productTotal += item.product.price * item.quantity+(item.product.price * item.quantity*(item.product.SGST+item.product.CGST)/100);
+      if (item.product && item.product.price) productTotal += item.product.price * item.quantity + (item.product.price * item.quantity * (item.product.SGST + item.product.CGST) / 100);
     });
     const deliveryFee = (order.total || 0) - productTotal;
 
@@ -1039,7 +1047,7 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
     doc.text("DentHub Pvt Ltd", leftX);
     doc.text("GSTIN: 09ASNPH5867P1ZO", leftX);
 
-    
+
 
     // Sold To
     const soldToY = startY;
@@ -1055,7 +1063,7 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
     doc.text(`Contact: ${contact}`, rightX);
     doc.text(`Email: ${email}`, rightX);
     doc.text(`Address: ${addr}`, rightX);
-    
+
 
     doc.moveDown(2);
 
@@ -1080,11 +1088,11 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
     const tableWidth = 530;
     const colSr = 50;
     const colProduct = 70;
-    const hsnNo=295
+    const hsnNo = 295
     const colQty = 337;
     const colPrice = 370;
-    const colSGST=420;
-    const colCGST=470;
+    const colSGST = 420;
+    const colCGST = 470;
     const colSubtotal = 510;
     const rowHeight = 20;
 
@@ -1096,7 +1104,7 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
     doc.text("Sr", marginLeft + 5, tableTop + 5, { width: colProduct - colSr - 5 });
     doc.text("Product", colProduct, tableTop + 5);
     doc.text("Hsn", hsnNo, tableTop + 5);
-    
+
     doc.text("Qty", colQty, tableTop + 5);
     doc.text(`Price`, colPrice, tableTop + 5);
     doc.text(`SGST`, colSGST, tableTop + 5);
@@ -1120,10 +1128,10 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
       const productName = item.product ? item.product.productName : "Product Deleted";
       const qty = item.quantity || 0;
       const price = item.product ? item.product.price : 0;
-      const subtotal = price * qty+(price * qty*(item.product.SGST+item.product.CGST)/100);
-      const sgst=item.product.SGST;
-      const cgst=item.product.CGST;
-      const hsn=item.product.hsnNo;
+      const subtotal = price * qty + (price * qty * (item.product.SGST + item.product.CGST) / 100);
+      const sgst = item.product.SGST;
+      const cgst = item.product.CGST;
+      const hsn = item.product.hsnNo;
 
       // Draw row border
       doc.rect(marginLeft, y, tableWidth, rowHeight).stroke();
@@ -1178,10 +1186,10 @@ app.get("/admin/order/receipt/:id", async (req, res) => {
 
 
 
-app.post("/admin/products/edit/:id",upload.single("img"), async (req, res) => {
+app.post("/admin/products/edit/:id", upload.single("img"), async (req, res) => {
   try {
-    if (!req.user || req.user.role!=="admin") return res.redirect("/login");
-    const { productName,originalprice, price, totalStock, shortDescription, longDescription, category, top, information,hsnNo,sgst,cgst } = req.body;
+    if (!req.user || req.user.role !== "admin") return res.redirect("/login");
+    const { productName, originalprice, price, totalStock, shortDescription, longDescription, category, top, information, hsnNo, sgst, cgst } = req.body;
 
     let updateData = {
       productName,
@@ -1191,15 +1199,15 @@ app.post("/admin/products/edit/:id",upload.single("img"), async (req, res) => {
       shortDescription,
       longDescription,
       category,
-      isTopSeller:top==="yes"?true:false,
+      isTopSeller: top === "yes" ? true : false,
       information,
       hsnNo,
-      SGST:sgst,
-      CGST:cgst
+      SGST: sgst,
+      CGST: cgst
     };
 
 
-   if (req.file) {
+    if (req.file) {
       updateData.img = req.file.path;
     }
 
@@ -1226,7 +1234,7 @@ app.post("/admin/order/status/:id", async (req, res) => {
 
 app.get("/admin/order/delete/:id", async (req, res) => {
   try {
-    if (!req.user || req.user.role!=="admin") return res.redirect("/login");
+    if (!req.user || req.user.role !== "admin") return res.redirect("/login");
     await Order.findByIdAndDelete(req.params.id);
     res.redirect("/admin");
   } catch (err) {
@@ -1236,7 +1244,7 @@ app.get("/admin/order/delete/:id", async (req, res) => {
 });
 
 app.post("/login", async (req, res, next) => {
-  const oldCart = req.session.cart; 
+  const oldCart = req.session.cart;
   passport.authenticate("local", async (err, user, info) => {
     if (err || !user) return res.status(400).json({ message: "Login failed! Invalid Credentials" });
 
@@ -1244,10 +1252,10 @@ app.post("/login", async (req, res, next) => {
       if (err) return res.status(500).json({ message: "Error during login" });
 
       // 🔹 Merge session cart into DB cart
-      req.session.cart=oldCart ;
+      req.session.cart = oldCart;
       console.log(req.user);
       if (req.session.cart && req.session.cart.length > 0) {
-        let dbCart = await Cart.findOne({ userEmail: req.user.email});
+        let dbCart = await Cart.findOne({ userEmail: req.user.email });
         if (!dbCart) dbCart = new Cart({ userEmail: req.user.email, items: [] });
         for (const sessionItem of req.session.cart) {
           const itemIndex = dbCart.items.findIndex(
@@ -1288,10 +1296,10 @@ app.post("/forgot", async (req, res) => {
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   // save in DB
-  
+
   await Otp.create({ email, otp: otpCode });
 
- 
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -1307,10 +1315,10 @@ app.post("/forgot", async (req, res) => {
       subject: "Password Reset OTP",
       text: `Your OTP for password reset is: ${otpCode}`
     });
-  
+
     // ✅ Only render if mail is sent successfully
     res.render("verify_otp", { email });
-  
+
   } catch (err) {
     console.error("Error sending mail:", err);
     res.status(500).send("Failed to send OTP. Please try again later.");
@@ -1322,7 +1330,7 @@ app.post("/forgot", async (req, res) => {
 
 app.post("/reset", async (req, res) => {
   const { email, otp, newPassword } = req.body;
- 
+
 
   const record = await Otp.findOne({ email, otp });
   if (!record) {
@@ -1333,7 +1341,7 @@ app.post("/reset", async (req, res) => {
   const userr = await user.findOne({ email });
   if (!userr) return res.send("User not found");
 
-  
+
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(newPassword, salt);
   userr.password = hash;
@@ -1344,7 +1352,7 @@ app.post("/reset", async (req, res) => {
   notifier.notify({
     title: 'Message!',
     message: 'Password Reset Successfully',
-  
+
     sound: true,
     wait: true
   })
@@ -1357,93 +1365,93 @@ app.post("/reset", async (req, res) => {
 
 
 
-    app.get('/logout', function(req, res, next) {
-        req.logout(function(err) {
-          if (err) { return next(err); }
-          res.redirect('/login');
-        });
-      });
+app.get('/logout', function (req, res, next) {
+  req.logout(function (err) {
+    if (err) { return next(err); }
+    res.redirect('/login');
+  });
+});
 
 
-      app.post("/cart/add", async (req, res) => {
-        try {
-          const { productId, quantity } = req.body;
-          const qty = quantity ? parseInt(quantity) : 1;
-      
-          if (req.user) {
-            // Logged in → Save in DB
-            console.log(req.user);
-            let cart = await Cart.findOne({ userEmail: req.user.useremail });
-      
-            if (!cart) cart = new Cart({ userEmail: req.user.useremail, items: [] });
-      
-            const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-      
-            if (itemIndex > -1) {
-              cart.items[itemIndex].quantity += qty;
-            } else {
-              cart.items.push({ product: productId, quantity: qty });
-            }
-      
-            await cart.save();
-            return res.json({ success: true, message: "Product added to cart (DB)" });
-      
-          } else {
-            // Guest → Save in session
-            if (!req.session.cart) req.session.cart = [];
-      
-            const itemIndex = req.session.cart.findIndex(item => item.productId === productId);
-      
-            if (itemIndex > -1) {
-              req.session.cart[itemIndex].quantity += qty;
-            } else {
-              req.session.cart.push({ productId, quantity: qty });
-            }
-      
-            return res.json({ success: true, message: "Product added to cart (Session)" });
-          }
-        } catch (err) {
-          console.error(err);
-          res.status(500).json({ success: false, message: "Server error" });
-        }
-      });
-      
+app.post("/cart/add", async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+    const qty = quantity ? parseInt(quantity) : 1;
 
-      app.post("/addaddress", async (req, res) => {
-       
-      
-        const { name, email, city, pincode, fullAddress, contactNumber } = req.body;
-      
-        let address = await Address.findOne({ userEmail: req.user.useremail });
-      
-        if (address) {
-          // Update existing
-          address.name = name;
-          address.email = email;
-          address.city = city;
-          address.pincode = pincode;
-          address.fullAddress = fullAddress;
-          address.contactNumber = contactNumber;
-          await address.save();
-        } else {
-          // Create new
-          address = new Address({
-            userEmail: req.user.useremail,
-            name,
-            email,
-            city,
-            pincode,
-            fullAddress,
-            contactNumber
-          });
-          await address.save();
-        }
-      
-        res.redirect("/placeorder"); // redirect back to same page
-      });
-      
+    if (req.user) {
+      // Logged in → Save in DB
+      console.log(req.user);
+      let cart = await Cart.findOne({ userEmail: req.user.useremail });
 
-      // Search products
+      if (!cart) cart = new Cart({ userEmail: req.user.useremail, items: [] });
+
+      const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+      if (itemIndex > -1) {
+        cart.items[itemIndex].quantity += qty;
+      } else {
+        cart.items.push({ product: productId, quantity: qty });
+      }
+
+      await cart.save();
+      return res.json({ success: true, message: "Product added to cart (DB)" });
+
+    } else {
+      // Guest → Save in session
+      if (!req.session.cart) req.session.cart = [];
+
+      const itemIndex = req.session.cart.findIndex(item => item.productId === productId);
+
+      if (itemIndex > -1) {
+        req.session.cart[itemIndex].quantity += qty;
+      } else {
+        req.session.cart.push({ productId, quantity: qty });
+      }
+
+      return res.json({ success: true, message: "Product added to cart (Session)" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+app.post("/addaddress", async (req, res) => {
+
+
+  const { name, email, city, pincode, fullAddress, contactNumber } = req.body;
+
+  let address = await Address.findOne({ userEmail: req.user.useremail });
+
+  if (address) {
+    // Update existing
+    address.name = name;
+    address.email = email;
+    address.city = city;
+    address.pincode = pincode;
+    address.fullAddress = fullAddress;
+    address.contactNumber = contactNumber;
+    await address.save();
+  } else {
+    // Create new
+    address = new Address({
+      userEmail: req.user.useremail,
+      name,
+      email,
+      city,
+      pincode,
+      fullAddress,
+      contactNumber
+    });
+    await address.save();
+  }
+
+  res.redirect("/placeorder"); // redirect back to same page
+});
+
+
+// Search products
 app.post("/search", async (req, res) => {
   try {
     const searchTerm = req.body.searchTerm;
@@ -1486,7 +1494,7 @@ app.get("/search-suggest", async (req, res) => {
   }
 });
 
-    
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 

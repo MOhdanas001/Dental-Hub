@@ -181,8 +181,18 @@
                         </div>
                         
                     </div>
-                    <h3 class="font-weight-semi-bold mb-4">₹<%=Pro.price%><del style="font-size: 20px; opacity: 0.7;" class="ml-2">₹<%=Pro.originalprice%></del> <span style="font-size: 20px; color: red;" class="ml-1"> <%=(((Pro.originalprice-Pro.price)/Pro.originalprice)*100).toFixed(2) %> % <i class="fa fa-arrow-down"></i></span></h3>
-                    <p class="mb-4"><%=Pro.shortDescription%></p>
+<h3 class="font-weight-semi-bold mb-4">
+    ₹<%= getInclusivePrice(Pro.price, Pro.SGST, Pro.CGST) %>
+    
+    <del style="font-size: 20px; opacity: 0.7;" class="ml-2">
+        ₹<%= getInclusivePrice(Pro.originalprice, Pro.SGST, Pro.CGST) %>
+    </del>
+
+    <span style="font-size: 20px; color: red;" class="ml-1">
+        <%= (((Pro.originalprice - Pro.price) / Pro.originalprice) * 100).toFixed(2) %> %
+        <i class="fa fa-arrow-down"></i>
+    </span>
+</h3>                    <p class="mb-4"><%=Pro.shortDescription%></p>
                     <!-- <div class="d-flex mb-3">
                         <strong class="text-dark mr-3">Sizes:</strong>
                         <form>

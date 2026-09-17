@@ -158,8 +158,10 @@
                         <% items.forEach(item => { %>
                         <tr>
                             <td class="align-middle"><img src="<%=item.product.img%>" alt="" style="width: 50px;"> <%=item.product.productName%></td>
-                            <td class="align-middle">₹<%=item.product.price%> <del>₹<%=item.product.originalprice%></del> </td>
-                            <td class="align-middle">
+<td class="align-middle">
+    ₹<%= getInclusivePrice(item.product.price,item.product.SGST,item.product.CGST) %>
+    <del><%= getInclusivePrice(item.product.originalprice,item.product.SGST,item.product.CGST) %></del>
+</td>                          <td class="align-middle">
                                 <div class="input-group quantity mx-auto" style="width: 100px;">
                                     <div class="input-group-btn">
                                         <a href="/decrease/<%= item.product.id%>" class="btn btn-sm btn-primary " >
@@ -174,7 +176,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="align-middle">₹<%=item.product.price*item.quantity%> <del>₹<%=item.product.originalprice*item.quantity%></del> </td>
+                            <td class="align-middle">₹<%=getInclusivePrice(item.product.price,item.product.SGST,item.product.CGST)*item.quantity%> <del>₹<%=getInclusivePrice(item.product.originalprice,item.product.SGST,item.product.CGST)*item.quantity%></del> </td>
                             <td class="align-middle"><a href="/remove/<%= item.product.id%>" class="btn btn-sm btn-danger"><i class="fa fa-times"></i></a></td>
                         </tr>
                         <%})%>
